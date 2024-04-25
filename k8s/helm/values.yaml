@@ -1,0 +1,63 @@
+host: god.example.com
+
+imagePullSecrets: regcred
+
+gitsecret:
+  enabled: false
+  secretName: gitops-secret
+
+image:
+  repository: gitops-dashboard
+  tag: latest
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: false
+
+route:
+  enabled: true
+
+config:
+  # repoBaseDir: The base directory where all the repositories are stored
+  repoBaseDir: /repos/
+
+  # scheduler for fetching the repositories
+  scheduler:
+    # node cron schedule every minute
+    cronExpression: '0 * * * * *'
+
+  # repositories to be fetched
+  repositories:
+    - name: gitops-branch-per-env
+      prUrl: https://github.com/MarcFriedhoff/{repo}/compare/{base}...{compare}?expand=1&title={title}&body={description}
+      url: https://github.com/MarcFriedhoff/gitops-branch-per-env.git
+
+  # profiles for the dashboard
+  profiles:
+    default:
+      branchCategories:
+        - name: default
+          branches:
+            - name: deve
+            - name: intg
+            - name: staging
+            - name: prod
+        - name: feature
+          branches:
+            - name: feature/.*
+        - name: hotfix
+          branches:
+            - name: hotfix/.*
+        - name: release
+          branches:
+            - name: release/.*
+        - name: bugfix
+          branches:
+            - name: bugfix/.*
+      deployTargets:
+        - name: dev
+          color: '#FF0000'
+        - name: intg
+          color: '#FFA500'
+        - name: prod
+          color: '#008000'

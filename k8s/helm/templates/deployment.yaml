@@ -1,0 +1,48 @@
+# create deployment for the application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitops-dashboard
+  template:
+    metadata:
+      labels:
+        app: gitops-dashboard
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecrets }}
+      containers:
+        - name: gitops-dashboard
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+        {{- if .Values.gitsecret.enabled }}
+            - name: GIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: gitops-secret
+                  key: GIT_USERNAME
+            - name: GIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gitops-secret
+                  key: GIT_PASSWORD
+        {{- end }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: gitops-dashboard
+              mountPath: /repos
+      volumes:
+        - configMap:
+            name: gitops-config
+          name: gitops-config
+        - name: gitops-dashboard
+          persistentVolumeClaim:
+            claimName: gitops-dashboard-pvc

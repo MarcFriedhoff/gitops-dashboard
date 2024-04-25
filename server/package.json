@@ -1,0 +1,24 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --detectOpenHandles"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "git2json": "^0.0.1",
+    "js-yaml": "^4.1.0",
+    "node-cron": "^3.0.3",
+    "node-git-2-json": "^1.10.0",
+    "simple-git": "^3.24.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

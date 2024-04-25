@@ -1,0 +1,13 @@
+# service
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitops-dashboard
+spec:
+  selector:
+    app: gitops-dashboard
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer
