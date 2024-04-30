@@ -1,33 +1,19 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Card, Row, Col, Container, Accordion, ListGroup, Breadcrumb } from 'react-bootstrap';
+import { Card, Row, Col, Container, Accordion, ListGroup, Breadcrumb, Button, Stack, Popover, Overlay, Offcanvas, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import TreeView, { flattenTree } from "react-accessible-treeview";
-
 import { DiCss3, DiJavascript, DiNpm } from "react-icons/di";
 import { FaList, FaRegFolder, FaRegFolderOpen } from "react-icons/fa";
-
 import { DiffEditor, Editor } from '@monaco-editor/react';
-import { Button } from 'react-bootstrap';
-
-import { ToggleButton } from 'react-bootstrap';
-import './GitBranches.css';
-import { alignPropType } from 'react-bootstrap/esm/types';
-import GitTag from './GitTag';
-import GitPullRequest from './GitPullRequest';
 import { v4 as uuidv4 } from 'uuid';
 import { useConfig } from './UseConfig';
-import { Stack } from 'react-bootstrap';
-import Overlay from 'react-bootstrap/Overlay';
-import { Offcanvas } from 'react-bootstrap';
-
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import GitGraphView from './GitGraphView';
-import Wpx from './Wpx';
-import { Popover } from 'react-bootstrap';
-import { Badge } from 'react-bootstrap';
 import { Bezier2, ListOl, House } from 'react-bootstrap-icons';
+import GitTag from './GitTag';
+import GitPullRequest from './GitPullRequest';
+import GitGraphView from './GitGraphView';
 import Versions from './Versions';
+import './GitBranches.css';
 
 const GitBranches = () => {
     const { repoName } = useParams();
@@ -58,6 +44,47 @@ const GitBranches = () => {
     const [prUrl, setPrUrl] = useState(null);
 
     const [selectedFilePath, setSelectedFilePath] = useState('');
+
+    // dummy data 
+    const [versions, setVersions] = useState({});
+
+    const [content, setContent] = useState(null);
+
+    const [targetVersion, setTargetVersion] = useState(null);
+
+    useEffect(() => {
+        // find the target version that starts with targetVersion from versions
+        if (!versions || !targetVersion) {
+            return;
+        }
+        const target = Object.keys(versions).find((version) => version.startsWith(targetVersion));
+        setContent(target);
+
+    }, [versions, targetVersion]);
+
+
+
+    useEffect(() => {
+
+        const fetchVersions = async () => {
+
+            const response = await axios.get(`/repos/${repoName}/versions`).then((response) => {
+                setVersions(response.data);
+                console.log("setVersions: " + response.data);
+            }).catch((error) => {
+                console.error(error);
+            });
+           
+
+        };
+
+        fetchVersions();
+
+    }, [repoName]);
+
+    useEffect(() => {
+        console.log("versions:" + versions);
+    }, [versions]);
 
     useEffect(() => {
         if (config !== null && repoName !== null) {
@@ -295,9 +322,7 @@ const GitBranches = () => {
 
     const handleVersionsClose = () => setShowVersions(false);
     const handleVersionsShow = () => setShowVersions(true);
-    
-    // dummy data 
-    const [versions, setVersions] = useState({});
+
 
     const [sizes, setSizes] = useState(['50%', '50%']);
 
@@ -312,8 +337,10 @@ const GitBranches = () => {
     const [target, setTarget] = useState(null);
     const ref = useRef(null);
 
-    const handleClick = (event) => {
+    const handleClick = (event, value) => {
         setShowWpx(!showWpx);
+        console.log(value);
+        setTargetVersion(value);
         setTarget(event.target);
         event.stopPropagation();
     };
@@ -347,20 +374,29 @@ const GitBranches = () => {
                     onHide={() => setShowWpx(false)}
                 >
                     <Popover id="popover-contained">
-                        <Popover.Header as="h3">Contents of version 1.0.1</Popover.Header>
+                        <Popover.Header as="h3">Contents of version {targetVersion}</Popover.Header>
                         <Popover.Body>
                             <ListGroup>
-                                <ListGroup.Item
-                                    className="d-flex justify-content-between align-items-start"
-                                >
-                                    <div className="ms-2 me-auto">
-                                        <div className="fw-bold">GitRepo 1</div>
-                                        <div>- My Package</div>
-                                    </div>
-                                    <Badge bg="primary" pill>
-                                        1.0.1
-                                    </Badge>
-                                </ListGroup.Item>
+                                {content ? 
+                                    versions[content].map((repositories) => (
+                                    <ListGroup.Item
+                                        className="d-flex justify-content-between align-items-start"
+                                    >
+                                        <div className="ms-2 me-auto">
+                                            <div className="fw-bold">{repositories.name}</div>
+                                            {repositories.packages && (
+                                                repositories.packages.map((pkg) => (
+                                                    <div>- {pkg}</div>
+                                                ))
+                                            )}
+                                        </div>
+
+                                        <Badge bg="primary" pill>
+                                            {repositories.tag}
+                                        </Badge>
+                                    </ListGroup.Item>
+                                ))
+                                : <div><i>Could not resolve content from image tag.</i></div>} 
                             </ListGroup>
 
                         </Popover.Body>
@@ -369,12 +405,12 @@ const GitBranches = () => {
                 <nav class="navbar navbar-dark bg-dar justify-content-between">
 
                     <Breadcrumb>
-                        <Breadcrumb.Item href="/"><House/></Breadcrumb.Item>
+                        <Breadcrumb.Item href="/"><House /></Breadcrumb.Item>
                         <Breadcrumb.Item href="#" active>{repoName}</Breadcrumb.Item>
                     </Breadcrumb>
                     <Stack direction="horizontal" gap={2}>
-                        <Bezier2 onClick={handleShow}/>
-                        <ListOl onClick={handleVersionsShow}/>
+                        <Bezier2 onClick={handleShow} />
+                        <ListOl onClick={handleVersionsShow} />
                         {config && config.profiles.default.deployTargets.map((deployTarget, index) => (
                             <span className="badge badge-pill" style={{ backgroundColor: deployTarget.color, borderColor: deployTarget.color }}>
                                 {deployTarget.name}
@@ -414,7 +450,7 @@ const GitBranches = () => {
                                                                 </Tooltip>
                                                             }
                                                         >
-                                                            <Button size="sm" onClick={handleClick} style={{ backgroundColor: color, borderColor: color }}>
+                                                            <Button size="sm" onClick={(event) => handleClick(event, value)} style={{ backgroundColor: color, borderColor: color }}>
                                                                 {value}
                                                             </Button>
                                                         </OverlayTrigger>
@@ -436,98 +472,98 @@ const GitBranches = () => {
                         <Accordion.Header>Files</Accordion.Header>
                         <Accordion.Body>
                             {selectedBranch && (
-                            <div style={{ display: 'flex' }}>
-                                <div style={{ width: '50%', boxSizing: 'border-box' }}>
-                                    {selectedBranch && files && files.length > 0 && (
-                                        <div className="ide">
-                                            <TreeView
-                                                data={files}
-                                                aria-label="Files"
-                                                togglableSelect
-                                                clickAction="EXCLUSIVE_SELECT"
-                                                multiSelect
-                                                onNodeSelect={handleSelectX}
-                                                nodeRenderer={({ element, isBranch, isExpanded, getNodeProps, level }) => (
-                                                    <div {...getNodeProps()} style={{ paddingLeft: 20 * (level - 1) }}>
-                                                        {isBranch ? (
-                                                            <><FolderIcon isOpen={isExpanded} /><span>{element.name}</span></>
-                                                        ) : (
-                                                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                <FileIcon filename={element.name} />
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1 }}>
-                                                                    <span>{element.name}</span>
-                                                                    <Button
-                                                                        size='sm'
-                                                                        variant="outline-secondary"
-                                                                        active={selectedButton === element.id}
-                                                                        onClick={(event) => {
-                                                                            setCompareFileName(null);
-                                                                            setSelectedButton(selectedButton === element.id ? null : element.id);
-                                                                            setCompareFileName(selectedFileName);
-                                                                            console.log(element.name);
-                                                                            let path = [];
-                                                                            let node = element;
-                                                                            while (node) {
-                                                                                path.push(node.name);
-                                                                                node = files[node.parent];
-                                                                            }
-                                                                            let filepath = path.reverse().join('/');
-                                                                            const fetchFile = async () => {
-                                                                                const response = await axios.get(`/repos/${repoName}/branches/${encodeURIComponent(selectedBranch)}/files${filepath}`);
-                                                                                setCompareFile(response.data);
-                                                                            };
-                                                                            fetchFile();
-                                                                            event.stopPropagation();
-                                                                        }}
-                                                                    >
-                                                                        Compare
-                                                                    </Button>
+                                <div style={{ display: 'flex' }}>
+                                    <div style={{ width: '50%', boxSizing: 'border-box' }}>
+                                        {selectedBranch && files && files.length > 0 && (
+                                            <div className="ide">
+                                                <TreeView
+                                                    data={files}
+                                                    aria-label="Files"
+                                                    togglableSelect
+                                                    clickAction="EXCLUSIVE_SELECT"
+                                                    multiSelect
+                                                    onNodeSelect={handleSelectX}
+                                                    nodeRenderer={({ element, isBranch, isExpanded, getNodeProps, level }) => (
+                                                        <div {...getNodeProps()} style={{ paddingLeft: 20 * (level - 1) }}>
+                                                            {isBranch ? (
+                                                                <><FolderIcon isOpen={isExpanded} /><span>{element.name}</span></>
+                                                            ) : (
+                                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                                    <FileIcon filename={element.name} />
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1 }}>
+                                                                        <span>{element.name}</span>
+                                                                        <Button
+                                                                            size='sm'
+                                                                            variant="outline-secondary"
+                                                                            active={selectedButton === element.id}
+                                                                            onClick={(event) => {
+                                                                                setCompareFileName(null);
+                                                                                setSelectedButton(selectedButton === element.id ? null : element.id);
+                                                                                setCompareFileName(selectedFileName);
+                                                                                console.log(element.name);
+                                                                                let path = [];
+                                                                                let node = element;
+                                                                                while (node) {
+                                                                                    path.push(node.name);
+                                                                                    node = files[node.parent];
+                                                                                }
+                                                                                let filepath = path.reverse().join('/');
+                                                                                const fetchFile = async () => {
+                                                                                    const response = await axios.get(`/repos/${repoName}/branches/${encodeURIComponent(selectedBranch)}/files${filepath}`);
+                                                                                    setCompareFile(response.data);
+                                                                                };
+                                                                                fetchFile();
+                                                                                event.stopPropagation();
+                                                                            }}
+                                                                        >
+                                                                            Compare
+                                                                        </Button>
 
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            )}
 
-                                                    </div>
-                                                )}
-                                            />
-                                        </div>
-                                    )} {!selectedBranch && (
-                                        <div>Select a branch.</div>
-                                    )} {selectedBranch && (!files || files.length === 0) && (
-                                        <div>No files found.</div>
-                                    )}
-                                </div>
+                                                        </div>
+                                                    )}
+                                                />
+                                            </div>
+                                        )} {!selectedBranch && (
+                                            <div>Select a branch.</div>
+                                        )} {selectedBranch && (!files || files.length === 0) && (
+                                            <div>No files found.</div>
+                                        )}
+                                    </div>
 
-                                <div style={{ width: '50%', boxSizing: 'border-box' }}>
-                                    {selectedFileName && !compareFileName && (
-                                        <>
-                                            {selectedFileName}
-                                            <Editor automaticLayout="true" defaultLanguage="javascript" defaultValue="// some comment"
-                                                value={file} theme='vs-dark' height={editorHeight} />
-                                        </>
-                                    )}
-                                    {
-                                        selectedFileName && compareFileName && (
+                                    <div style={{ width: '50%', boxSizing: 'border-box' }}>
+                                        {selectedFileName && !compareFileName && (
                                             <>
-                                                <Container>
-                                                <Badge>{selectedFileName}</Badge> vs <Badge bg='secondary'>{compareFileName}</Badge>
-                                                </Container>
-                                                <DiffEditor automaticLayout="true" original={file} modified={compareFile} theme='vs-dark' />
+                                                {selectedFileName}
+                                                <Editor automaticLayout="true" defaultLanguage="javascript" defaultValue="// some comment"
+                                                    value={file} theme='vs-dark' height={editorHeight} />
                                             </>
-                                        )
-                                    }
-                                    {!selectedFileName && !compareFileName && (
-                                        <div class="alert-dark" role="alert">
-                                        <strong>Select File</strong> Select a file by clicking on the file name to view the file contents.
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                        {
+                                            selectedFileName && compareFileName && (
+                                                <>
+                                                    <Container>
+                                                        <Badge>{selectedFileName}</Badge> vs <Badge bg='secondary'>{compareFileName}</Badge>
+                                                    </Container>
+                                                    <DiffEditor automaticLayout="true" original={file} modified={compareFile} theme='vs-dark' />
+                                                </>
+                                            )
+                                        }
+                                        {!selectedFileName && !compareFileName && (
+                                            <div class="alert-dark" role="alert">
+                                                <strong>Select File</strong> Select a file by clicking on the file name to view the file contents.
+                                            </div>
+                                        )}
+                                    </div>
 
-                            </div>
+                                </div>
                             )}
                             {!selectedBranch && (
                                 <div class="alert-dark" role="alert">
-                                <strong>Select Branch</strong> Select a branch by clicking on the branch card to view files.
+                                    <strong>Select Branch</strong> Select a branch by clicking on the branch card to view files.
                                 </div>
                             )}
                         </Accordion.Body>
@@ -539,7 +575,7 @@ const GitBranches = () => {
                         <Accordion.Body>
                             <ListGroup>
                                 {commits.map((commit, index) => (
-                                <ListGroup.Item className='border-0 m-0 p-0 mb-0'
+                                    <ListGroup.Item className='border-0 m-0 p-0 mb-0'
                                         action
                                         onClick={() => handleCommitClick(commit.hash)}
                                     >{commit.hashAbbrev}: {commit.subject} {commit.date} {commit.author.name} {commit.author.date}</ListGroup.Item>
@@ -556,7 +592,7 @@ const GitBranches = () => {
 
                                 {tags.map((tag, index) => (
                                     <ListGroup.Item action className='border-0 m-0 p-0 mb-0'>
-                                    {tag}</ListGroup.Item>
+                                        {tag}</ListGroup.Item>
                                 ))}
                             </ListGroup>
                         </Accordion.Body>

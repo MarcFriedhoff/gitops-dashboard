@@ -5,20 +5,20 @@ import { Modal, Button, Form } from 'react-bootstrap';
 
 import axios from 'axios';
 
-const GitPullRequest = ({ show, handleClose, repoName, branch, prUrl }) => {
+const GitPullRequest = ({ show, handleClose, repoName, branch, compare, prUrl }) => {
     const [sourceBranch, setSourceBranch] = useState('');
     const [description, setDescription] = useState('');
     const [title, setTitle] = useState('');
     const [sourceBranches, setSourceBranches] = useState([]);
 
     function createPullRequest () {
-        // replace branch, title, and description with the correct values in prURL
-        prUrl = prUrl.replace('{repo}', repoName);
-        prUrl = prUrl.replace('{base}', encodeURIComponent(sourceBranch.replace('origin/','')));
-        prUrl = prUrl.replace('{compare}', encodeURIComponent(branch.replace('origin/','')));
-        prUrl = prUrl.replace('{title}', encodeURIComponent(title));
-        prUrl = prUrl.replace('{description}', encodeURIComponent(description));
-        
+
+        prUrl = prUrl.replace('${repo}', repoName);
+        prUrl = prUrl.replace('${base}', encodeURIComponent(branch));
+        prUrl = prUrl.replace('${compare}', encodeURIComponent(compare));
+        prUrl = prUrl.replace('${title}', encodeURIComponent(title));
+        prUrl = prUrl.replace('${description}', encodeURIComponent(description));
+       
         console.log(prUrl);
         var win = window.open(prUrl, '_blank');
         win.focus();

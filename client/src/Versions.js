@@ -9,14 +9,15 @@ const Versions = ({ versions }) => (
                 <Accordion.Item >
                     <Accordion.Header>{version}</Accordion.Header>
                     <Accordion.Body>
-                        {data.repositories.map((repositories) => (
+
+                        {data.map((repositories) => (
                             <ListGroup>
                                     <ListGroup.Item
                                         className="d-flex justify-content-between align-items-start"
                                         >
                                         <div className="ms-2 me-auto">
                                             <div className="fw-bold">{repositories.name}</div>
-                                        {repositories.pkgs.map((pkg) => (
+                                        {repositories.packages.map((pkg) => (
                                             <div>- {pkg}</div>
                                         ))}
                                         </div>

@@ -34,6 +34,7 @@ const defaultFields = {
 async function git2json({ fields = defaultFields, path, extraLogOptions = ["--all"] } = {}) {
     // this require can't be global for mocking issue
     const keys = Object.keys(fields);
+    console.log(extraLogOptions);
     const prettyKeys = keys.map(a => fields[a].value).join('%x00');
 
     const git = simpleGit(path);

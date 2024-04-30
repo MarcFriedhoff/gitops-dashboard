@@ -6,17 +6,18 @@ repoBaseDir: /tmp/
 # scheduler for fetching the repositories
 scheduler:
   # node cron schedule every minute
-  cronExpression: '0 * * * * *'
+  cronExpression: 0 * * * * *
 
 # repositories to be fetched
 repositories:
   - name: gitops-branch-per-env
-    prUrl: https://github.com/MarcFriedhoff/{repo}/compare/{base}...{compare}?expand=1&title={title}&body={description}
-    url: https://github.com/MarcFriedhoff/gitops-branch-per-env.git
+    prUrl: https://github.com/MarcFriedhoff/${repo}/compare/${base}...${compare}?expand=1&title=${title}&body=${description}
+    url: https://${GIT_USER}:${GIT_PASSWORD}@github.com/MarcFriedhoff/gitops-branch-per-env.git
 
 # profiles for the dashboard
 profiles:
   default:
+    releaseTagPattern: '[0-9]+.[0-9]+.[0-9]+-rc[0-9]+-sc1'
     branchCategories:
       - name: default
         branches:
@@ -43,5 +44,3 @@ profiles:
         color: '#FFA500'
       - name: prod
         color: '#008000'
-
-    

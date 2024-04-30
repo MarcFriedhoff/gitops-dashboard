@@ -13,7 +13,8 @@ const debug = require('debug');
 const fs = require('fs');
 const simpleGit = require('simple-git');
 const git2json = require('./git2json');
-const { analyzeTags } = require('./analyzeTags');
+const { analyzeTags, transformConfig } = require('./analyzeTags');
+const { version } = require('os');
 
 app.use(express.static(path.join(__dirname, '../client/build')));
 app.use(bodyParser.json());
@@ -95,7 +96,7 @@ app.get('/repos/:repoName/branches', async (req, res) => {
         const git = simpleGit(repoPath);
         let branchSummary;
         if (filter) {
-            branchSummary = await git.branch(['-r','--list', filter]);
+            branchSummary = await git.branch(['-r', '--list', filter]);
             res.send(branchSummary.branches);
             return;
         } else {
@@ -207,14 +208,14 @@ app.get('/repos/:repoName/commits', async (req, res) => {
 
         let extraLogOptions = [];
         if (branch && filePath) {
-            extraLogOptions: [branch, '--all', '--', filePath.replace(/^\//, '')];
+            extraLogOptions = [branch, '--', filePath.replace(/^\//, '')];
         } else if (branch) {
-            extraLogOptions: [branch, '--all', '--'];
+            extraLogOptions = [branch, '--'];
         } else {
-            extraLogOptions: ['--all']
+            extraLogOptions = ['--all']
         }
 
-        let json = await git2json.git2json({ path: repoPath, extraLogOptions});
+        let json = await git2json.git2json({ path: repoPath, extraLogOptions });
 
         console.log(json);
         res.send(json);
@@ -227,23 +228,22 @@ app.get('/repos/:repoName/commits', async (req, res) => {
 app.get('/repos/:repoName/versions', async (req, res) => {
     try {
 
-        const retval = {"1.0.1": {
-            repositories: [ 
-                {
-                    name: "GitRepo 1",
-                    tag: "1.0.1",
-                    pkgs: ["My Package", "My Package 2"]
-                },
-                {
-                    name: "GitRepo 2",
-                    tag: "1.0.1",
-                    pkgs: ["My Package", "My Package 2"]
-                }
-            ]
-        }};
+        const tagFilter = config.profiles.default.releaseTagPattern;
 
+        const repoPath = path.join(reposDir, req.params.repoName);
+        const tagMap = await analyzeTags(repoPath, tagFilter);
 
-        res.send(retval);
+        // iterate over tagMap and create a map of versions
+
+        let versions = {};
+
+        for (const [tag, fileContent] of Object.entries(tagMap)) {
+            const yamlDoc = yaml.load(fileContent);
+            const config = transformConfig(yamlDoc, tag);
+            versions[tag] = config.repositories;
+        }
+
+        res.send(versions);
     } catch (error) {
         console.error(`Error getting versions for repo ${req.params.repoName}: ${error.message}`);
         res.status(500).send({ message: error.message });
@@ -270,8 +270,6 @@ app.post('/repos/:repoName/tag', async (req, res) => {
 
         // get commit history
         const git = simpleGit(repoPath);
-
-
 
         let tagResult;
 
@@ -334,8 +332,16 @@ function createCronJob() {
                 // clone the repository
                 const git = simpleGit();
                 try {
+
+                    // Get GIT_USER and GIT_PASSWORD from environment
+                    const gitUser = process.env.GIT_USER;
+                    const gitPassword = process.env.GIT_PASSWORD;
+
+                    // Replace ${GIT_USER} and ${GIT_PASSWORD} in repo.url
+                    let repoUrl = repo.url.replace('${GIT_USER}', gitUser).replace('${GIT_PASSWORD}', gitPassword);
+
                     // clone repo but do not checkout
-                    await git.clone(repo.url, repoPath, { '--no-checkout': null });
+                    await git.clone(repoUrl, repoPath, { '--no-checkout': null });
                     console.log(`cloned repo from the repository at ${repoPath}`);
 
                     // Fetch all branches from the remote repository
@@ -347,7 +353,6 @@ function createCronJob() {
                 } catch (err) {
                     console.error(`Error cloning repository from ${repoPath}: ${err.message}`);
                 }
-                console.error(`Repository base directory ${config.repoBaseDir} not found`);
                 continue;
             } else {
 
@@ -370,6 +375,6 @@ function createCronJob() {
 */
 app.listen(3000, () => {
     const task = createCronJob();
-    //task.start();  // Start the task immediately
+    task.start();  // Start the task immediately
     console.log('Server is running on port 3000');
 });
