@@ -373,7 +373,7 @@ const GitBranches = () => {
                     rootClose={true}
                     onHide={() => setShowWpx(false)}
                 >
-                    <Popover id="popover-contained">
+                    <Popover id="popover-contained" style={{maxWidth: '100%'}}>
                         <Popover.Header as="h3">Contents of version {targetVersion}</Popover.Header>
                         <Popover.Body>
                             <ListGroup>
@@ -392,7 +392,7 @@ const GitBranches = () => {
                                         </div>
 
                                         <Badge bg="primary" pill>
-                                            {repositories.tag}
+                                            {repositories.tag}  
                                         </Badge>
                                     </ListGroup.Item>
                                 ))
