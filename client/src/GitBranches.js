@@ -349,7 +349,7 @@ const GitBranches = () => {
         <>
             <Offcanvas show={show} onHide={handleClose}>
                 <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>Branching Model</Offcanvas.Title>
+                    <Offcanvas.Title>Git Graph</Offcanvas.Title>
                 </Offcanvas.Header>
                 <Offcanvas.Body>
                     <GitGraphView commits={commits}></GitGraphView>
@@ -357,7 +357,7 @@ const GitBranches = () => {
             </Offcanvas>
             <Offcanvas show={showVersions} onHide={handleVersionsClose}>
                 <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>Verions</Offcanvas.Title>
+                    <Offcanvas.Title>Versions</Offcanvas.Title>
                 </Offcanvas.Header>
                 <Offcanvas.Body>
                     <Versions versions={versions}></Versions>
