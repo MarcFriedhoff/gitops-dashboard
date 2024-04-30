@@ -1,7 +1,7 @@
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
-  name: ${APP_NAME}
+  name: ${IMAGE_NAME}-build
 spec:
   runPolicy: Serial
   source:
@@ -22,7 +22,4 @@ parameters:
   required: true
 - name: IMAGE_NAME
   description: The name of the image:tag.
-  required: true
-- name: APP_NAME
-  description: The name of the application.
   required: true
