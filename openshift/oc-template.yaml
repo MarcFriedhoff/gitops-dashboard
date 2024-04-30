@@ -23,6 +23,9 @@ objects:
       type: Docker
       dockerStrategy:
         dockerfilePath: Dockerfile
+        env:
+          - name: SSL_NO_VERIFY
+            value: 'true'
     output:
       to:
         kind: ImageStreamTag
