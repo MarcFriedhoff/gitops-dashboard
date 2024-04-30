@@ -17,6 +17,8 @@ objects:
       git:
         uri: ${GIT_URL}
       type: Git
+      sourceSecret:
+        name: ${GIT_SECRET}
     strategy:
       type: Docker
       dockerStrategy:
