@@ -24,7 +24,7 @@ objects:
       dockerStrategy:
         dockerfilePath: Dockerfile
         env:
-          - name: SSL_NO_VERIFY
+          - name: GIT_SSL_NO_VERIFY
             value: 'true'
     output:
       to:
