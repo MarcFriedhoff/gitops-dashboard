@@ -34,3 +34,6 @@ parameters:
 - name: IMAGE_NAME
   description: The name of the image:tag.
   required: true
+- name: GIT_SECRET
+  description: The name of the secret containing the Git credentials.
+  required: true
