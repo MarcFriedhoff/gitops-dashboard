@@ -7,7 +7,7 @@ This project can be built and deployed using OpenShift. Here's how you can build
 The project includes OpenShift templates for building and deploying the project. You can apply the templates using the following commands:
 
 ```bash
-oc apply -f . -p IMAGE_NAME=gitops-dashboard -p GIT_REPO=<git-repo-url>
+oc process -f . -p IMAGE_NAME=gitops-dashboard -p GIT_REPO=<git-repo-url>
 ```
 
 
