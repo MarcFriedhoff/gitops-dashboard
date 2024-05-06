@@ -10,8 +10,11 @@ spec:
       app: gitops-dashboard
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/cm.yaml") . | sha256sum }}
       labels:
         app: gitops-dashboard
+
     spec:
       imagePullSecrets:
       - name: {{ .Values.imagePullSecrets }}

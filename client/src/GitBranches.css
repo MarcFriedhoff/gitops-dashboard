@@ -46,3 +46,14 @@
     margin-right: 5px;
   }
   
+  .tooltip-inner {
+    max-width: 100%; 
+  }
+
+  .repo-menu {
+    transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  }
+  
+  .repo-menu:hover {
+    transform: scale(2.1); /* Enlarge the component */
+  }

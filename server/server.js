@@ -308,6 +308,7 @@ async function readYamlFiles(dir, repoPath, branch) {
             console.error(`Error parsing YAML file ${file}: ${error.message}`);
         }
     }
+    
     console.log(imageTagMap);
 
     return imageTagMap;

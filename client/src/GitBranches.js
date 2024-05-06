@@ -4,16 +4,23 @@ import axios from 'axios';
 import { Card, Row, Col, Container, Accordion, ListGroup, Breadcrumb, Button, Stack, Popover, Overlay, Offcanvas, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import TreeView, { flattenTree } from "react-accessible-treeview";
 import { DiCss3, DiJavascript, DiNpm } from "react-icons/di";
-import { FaList, FaRegFolder, FaRegFolderOpen } from "react-icons/fa";
+import { FaList, FaFolder, FaFolderOpen } from "react-icons/fa";
 import { DiffEditor, Editor } from '@monaco-editor/react';
 import { v4 as uuidv4 } from 'uuid';
 import { useConfig } from './UseConfig';
-import { Bezier2, ListOl, House } from 'react-bootstrap-icons';
+import { Bezier2, ListOl, House, Git } from 'react-bootstrap-icons';
 import GitTag from './GitTag';
 import GitPullRequest from './GitPullRequest';
 import GitGraphView from './GitGraphView';
 import Versions from './Versions';
 import './GitBranches.css';
+import { BiGitBranch } from "react-icons/bi";
+import GitClone from './GitClone';
+import { SiHelm } from "react-icons/si";
+import { TbPackages } from "react-icons/tb";
+
+
+
 
 const GitBranches = () => {
     const { repoName } = useParams();
@@ -43,14 +50,36 @@ const GitBranches = () => {
 
     const [prUrl, setPrUrl] = useState(null);
 
+    const [repoUrl, setRepoUrl] = useState(null);
+
     const [selectedFilePath, setSelectedFilePath] = useState('');
 
-    // dummy data 
     const [versions, setVersions] = useState({});
 
     const [content, setContent] = useState(null);
 
     const [targetVersion, setTargetVersion] = useState(null);
+
+    const [deployTargetsOrder, setDeployTargetsOrder] = useState(null);
+
+    useEffect(() => {
+      if (config) {
+        const order = config.profiles.default.deployTargets.reduce((map, target, index) => {
+          map[target.name] = index;
+          return map;
+        }, {});
+        setDeployTargetsOrder(order);
+      }
+    }, [config]);
+
+    function sortImageTagMap(branch) {
+
+        return Object.entries(branch.imageTagMap).sort(([a], [b]) => {
+            const aKey = a.split('deploy/')[1].split('/')[0]; // Get the string after '/deploy/' and before the next '/' in a
+            const bKey = b.split('deploy/')[1].split('/')[0]; // Get the string after '/deploy/' and before the next '/' in b
+            return deployTargetsOrder[aKey] - deployTargetsOrder[bKey];
+          });
+    }
 
     useEffect(() => {
         // find the target version that starts with targetVersion from versions
@@ -74,7 +103,7 @@ const GitBranches = () => {
             }).catch((error) => {
                 console.error(error);
             });
-           
+
 
         };
 
@@ -92,6 +121,17 @@ const GitBranches = () => {
             if (repo) {
                 setPrUrl(repo.prUrl);
                 console.log("prUrl" + repo.prUrl);
+            }
+        }
+    }, [config, repoName]);
+
+
+    useEffect(() => {
+        if (config !== null && repoName !== null) {
+            const repo = config.repositories.find(repo => repo.name === repoName);
+            if (repo) {
+                setRepoUrl(repo.url);
+                console.log("url" + repo.url);
             }
         }
     }, [config, repoName]);
@@ -345,6 +385,11 @@ const GitBranches = () => {
         event.stopPropagation();
     };
 
+    const [showGitClone, setShowGitClone] = useState(false);
+    const handleCloseGitClone = () => setShowGitClone(false);
+    const handleShowGitClone = () => setShowGitClone(true);
+
+
     return (
         <>
             <Offcanvas show={show} onHide={handleClose}>
@@ -363,6 +408,14 @@ const GitBranches = () => {
                     <Versions versions={versions}></Versions>
                 </Offcanvas.Body>
             </Offcanvas>
+            <Offcanvas show={showGitClone} onHide={handleCloseGitClone}>
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title>Clone Repository</Offcanvas.Title>
+                </Offcanvas.Header>
+                <Offcanvas.Body>
+                    <GitClone repoUrl={repoUrl} />
+                </Offcanvas.Body>
+            </Offcanvas>
             <Container ref={ref}>
                 <Overlay
                     show={showWpx}
@@ -373,30 +426,30 @@ const GitBranches = () => {
                     rootClose={true}
                     onHide={() => setShowWpx(false)}
                 >
-                    <Popover id="popover-contained" style={{maxWidth: '100%'}}>
+                    <Popover id="popover-contained" style={{ maxWidth: '100%' }}>
                         <Popover.Header as="h3">Contents of version {targetVersion}</Popover.Header>
                         <Popover.Body>
                             <ListGroup>
-                                {content ? 
+                                {content ?
                                     versions[content].map((repositories) => (
-                                    <ListGroup.Item
-                                        className="d-flex justify-content-between align-items-start"
-                                    >
-                                        <div className="ms-2 me-auto">
-                                            <div className="fw-bold">{repositories.name}</div>
-                                            {repositories.packages && (
-                                                repositories.packages.map((pkg) => (
-                                                    <div>- {pkg}</div>
-                                                ))
-                                            )}
-                                        </div>
+                                        <ListGroup.Item
+                                            className="d-flex justify-content-between align-items-start"
+                                        >
+                                            <div className="ms-2 me-auto">
+                                                <div className="fw-bold">{repositories.name}</div>
+                                                {repositories.packages && (
+                                                    repositories.packages.map((pkg) => (
+                                                        <div>- {pkg}</div>
+                                                    ))
+                                                )}
+                                            </div>
 
-                                        <Badge bg="primary" pill>
-                                            {repositories.tag}  
-                                        </Badge>
-                                    </ListGroup.Item>
-                                ))
-                                : <div><i>Could not resolve content from image tag.</i></div>} 
+                                            <Badge bg="primary" pill>
+                                                {repositories.tag}
+                                            </Badge>
+                                        </ListGroup.Item>
+                                    ))
+                                    : <div><i>Could not resolve content from image tag.</i></div>}
                             </ListGroup>
 
                         </Popover.Body>
@@ -409,8 +462,9 @@ const GitBranches = () => {
                         <Breadcrumb.Item href="#" active>{repoName}</Breadcrumb.Item>
                     </Breadcrumb>
                     <Stack direction="horizontal" gap={2}>
-                        <Bezier2 onClick={handleShow} />
-                        <ListOl onClick={handleVersionsShow} />
+                        <Git className="repo-menu" onClick={handleShowGitClone} />
+                        <Bezier2 className="repo-menu" onClick={handleShow} />
+                        <ListOl className="repo-menu" onClick={handleVersionsShow} />
                         {config && config.profiles.default.deployTargets.map((deployTarget, index) => (
                             <span className="badge badge-pill" style={{ backgroundColor: deployTarget.color, borderColor: deployTarget.color }}>
                                 {deployTarget.name}
@@ -427,7 +481,7 @@ const GitBranches = () => {
                                 return (
                                     <Card id={`card-${cardId}`} style={{ width: '18rem', margin: '8px 16px', padding: '0px' }} variant="dark" bg={branch.name === selectedBranch ? 'primary' : 'dark'} text={branch.name === selectedBranch ? 'white' : 'white'} onClick={() => handleCardClick(branch.name, `card-${cardId}`)}>
                                         <Card.Body>
-                                            <Card.Title>{branch.name}</Card.Title>
+                                            <Card.Title><BiGitBranch /> {branch.name}</Card.Title>
                                             <Card.Text>[{branch.commit}]</Card.Text>
                                             <Card.Text>{branch.label}</Card.Text>
                                             {selectedBranch && (
@@ -437,27 +491,31 @@ const GitBranches = () => {
                                             )}
                                         </Card.Body>
                                         <Card.Footer>
-                                            <Stack direction="horizontal" gap={2}>
-                                                {Object.entries(branch.imageTagMap).map(([key, value]) => {
+                                            <div>
+                                                {sortImageTagMap(branch).map(([key, value]) => {
                                                     const color = getColorForFile(key);
+                                                    console.log("key: " + key + " value: " + value + " color:" + color);
                                                     return (
                                                         <OverlayTrigger
                                                             key={key}
                                                             placement="top"
                                                             overlay={
                                                                 <Tooltip id={`tooltip-${key}`}>
-                                                                    {key}
+                                                                    <div style={{ textAlign: 'left' }}>
+                                                                        <div><strong>tag:</strong> {value}</div>
+                                                                        <div><strong>source:</strong> {key}</div>
+                                                                    </div>
                                                                 </Tooltip>
                                                             }
                                                         >
-                                                            <Button size="sm" onClick={(event) => handleClick(event, value)} style={{ backgroundColor: color, borderColor: color }}>
+                                                            <Button className="m-1" size="sm" onClick={(event) => handleClick(event, value)} style={{ backgroundColor: color, borderColor: color, maxWidth: '150px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                                                 {value}
                                                             </Button>
                                                         </OverlayTrigger>
                                                     );
                                                 }
                                                 )}
-                                            </Stack>
+                                            </div>
                                         </Card.Footer>
 
                                     </Card>
@@ -486,7 +544,7 @@ const GitBranches = () => {
                                                     nodeRenderer={({ element, isBranch, isExpanded, getNodeProps, level }) => (
                                                         <div {...getNodeProps()} style={{ paddingLeft: 20 * (level - 1) }}>
                                                             {isBranch ? (
-                                                                <><FolderIcon isOpen={isExpanded} /><span>{element.name}</span></>
+                                                                <><FolderIcon isOpen={isExpanded} color={getColorForFile (element.name)} /><span>{element.name}</span></>
                                                             ) : (
                                                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                     <FileIcon filename={element.name} />
@@ -497,10 +555,8 @@ const GitBranches = () => {
                                                                             variant="outline-secondary"
                                                                             active={selectedButton === element.id}
                                                                             onClick={(event) => {
-                                                                                setCompareFileName(null);
+                                                                                setCompareFileName(selectedButton === element.id ? null : element.name);
                                                                                 setSelectedButton(selectedButton === element.id ? null : element.id);
-                                                                                setCompareFileName(selectedFileName);
-                                                                                console.log(element.name);
                                                                                 let path = [];
                                                                                 let node = element;
                                                                                 while (node) {
@@ -539,7 +595,7 @@ const GitBranches = () => {
                                             <>
                                                 {selectedFileName}
                                                 <Editor automaticLayout="true" defaultLanguage="javascript" defaultValue="// some comment"
-                                                    value={file} theme='vs-dark' height={editorHeight} />
+                                                    value={file} theme='vs-dark' height={editorHeight} options={{readOnly: true}} />
                                             </>
                                         )}
                                         {
@@ -548,7 +604,7 @@ const GitBranches = () => {
                                                     <Container>
                                                         <Badge>{selectedFileName}</Badge> vs <Badge bg='secondary'>{compareFileName}</Badge>
                                                     </Container>
-                                                    <DiffEditor automaticLayout="true" original={file} modified={compareFile} theme='vs-dark' />
+                                                    <DiffEditor automaticLayout="true" original={file} modified={compareFile} theme='vs-dark' options={{readOnly: true}} />
                                                 </>
                                             )
                                         }
@@ -607,14 +663,22 @@ const GitBranches = () => {
 
 };
 
-const FolderIcon = ({ isOpen }) =>
+const FolderIcon = ({ isOpen, color }) =>
+
     isOpen ? (
-        <FaRegFolderOpen color="e8a87c" className="icon" />
+        <FaFolderOpen color={color} className="icon" />
     ) : (
-        <FaRegFolder color="e8a87c" className="icon" />
+        <FaFolder color={color} className="icon" />
     );
 
 const FileIcon = ({ filename }) => {
+    switch (filename) {
+        case "values.yaml":
+            return <SiHelm />;
+        case "packages.yaml":
+            return <TbPackages />;
+    }
+
     const extension = filename.slice(filename.lastIndexOf(".") + 1);
     switch (extension) {
         case "js":

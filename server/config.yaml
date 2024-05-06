@@ -21,8 +21,7 @@ profiles:
     branchCategories:
       - name: default
         branches:
-          - name: deve
-          - name: intg
+          - name: development
           - name: staging
           - name: prod
       - name: feature
@@ -38,9 +37,27 @@ profiles:
         branches:
           - name: bugfix/.*
     deployTargets:
-      - name: dev
-        color: '#FF0000'
+      - name: deve
+        color: '#006400'
+      - name: deve2   
+        color: '#9ACD32'
       - name: intg
-        color: '#FFA500'
+        color: '#CCCC00'
+      - name: intg2
+        color: '#FF8C00'
+      - name: prep
+        color: '#FF4500'
+      - name: prep2
+        color: '#4682B4'
+      - name: lopt
+        color: '#4169E1'
+      - name: migr
+        color: '#FF69B4'
+      - name: tdbl
+        color: '#FF1493'
+      - name: trai
+        color: '#FF0000'
+      - name: hfix
+        color: '#CD5C5C'
       - name: prod
-        color: '#008000'
+        color: '#8B0000'

@@ -6,6 +6,7 @@ import GitBranches from './GitBranches'; // Import the GitBranches component
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useLocation } from 'react-router-dom';
+import GitOpsConfig from './GitOpsConfig';
 
 const App = () => {
 
@@ -24,10 +25,16 @@ const App = () => {
             <Nav.Link>Repos</Nav.Link>
           </LinkContainer>
           </Nav>
+        <Nav>
+          <LinkContainer to="/showconfig">
+            <Nav.Link>Config</Nav.Link>
+          </LinkContainer>
+          </Nav>
         </Container>
       </Navbar>
       <Container fluid>
         <Routes>
+          <Route path="/showconfig" element={<GitOpsConfig />} />
           <Route path="/repos" element={<GitRepos />} />
           <Route path="/repos/:repoName" element={<GitBranches />} />
           <Route path="/repos/:repoName/branches" element={<GitBranches />} />
